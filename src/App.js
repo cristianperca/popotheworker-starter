@@ -2,10 +2,11 @@ import React, { Component } from "react";
 import TodayList from "./Components/TodayList";
 import CreateTaskForm from "./Components/CreateTaskForm";
 import moment from "moment";
+import FutureList from "./Components/FutureList";
 
 class App extends Component {
   state = {
-    tasks: [
+    todayTasks: [
       {
         title: "Eat a banana",
         details: "Find a banana. Eat it.",
@@ -17,34 +18,46 @@ class App extends Component {
         due: moment()
       },
     ],
+    futureTasks: []
   };
 
   addTask = (title, details, due) => {
     let newTask = { title: title, details: details, due: due };
-    let tasks = this.state.tasks;
-    tasks.push(newTask);
-    this.setState({ tasks: tasks });
+    if (due && due.isAfter(moment(), "day")) {
+      let tasks = this.state.futureTasks;
+      tasks.push(newTask);
+      this.setState({ futureTasks: tasks });
+    } else {
+      let tasks = this.state.todayTasks;
+      tasks.push(newTask);
+      this.setState({ todayTasks: tasks });
+    }
     this.updateLocalStorage();
   };
 
-  updateLocalStorage() {
+  updateLocalStorage = () => {
+    // This next line will stringify the tasks list
     let tasks = JSON.stringify({
-      tasks: this.state.tasks,
+      todayTasks: this.state.todayTasks,
+      futureTasks: this.state.futureTasks
     });
-    // console.log('updateLocalStorage: this.state.tasks: ', this.state.tasks);
-    // console.log('updateLocalStorage: tasks: ', tasks);
-    
     localStorage.setItem("tasks", tasks);
-  }
+  };
 
   retrieveFromLocalStorage = () => {
     let tasks = JSON.parse(localStorage.getItem("tasks"));
     if (tasks) {
-      // The following iteration converts a stringified due date to a moment object.
-      tasks.tasks.forEach(task => {
+      // The following iterations converts a stringified due date to a moment object.
+      tasks.todayTasks.forEach(task => {
         if (task.due) task.due = moment(task.due);
       });
-      this.setState({ tasks: tasks.tasks });
+      tasks.futureTasks.forEach(task => {
+        if (task.due) task.due = moment(task.due);
+      });
+      this.setState({
+        todayTasks: tasks.todayTasks,
+        futureTasks: tasks.futureTasks
+      });
     }
   };
   
@@ -55,8 +68,9 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <CreateTaskForm addTask={this.addTask} />
-        <TodayList tasks={this.state.tasks} />
+        <CreateTaskForm addTask={this.addTask.bind(this)} />
+        <TodayList tasks={this.state.todayTasks} />
+        <FutureList tasks={this.state.futureTasks} />
       </div>
     );
   }

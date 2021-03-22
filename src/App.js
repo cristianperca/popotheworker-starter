@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import TodayList from "./Components/TodayList";
 import CreateTaskForm from "./Components/CreateTaskForm";
+import moment from "moment";
 
 class App extends Component {
   state = {
@@ -8,16 +9,18 @@ class App extends Component {
       {
         title: "Eat a banana",
         details: "Find a banana. Eat it.",
+        due: moment()
       },
       {
         title: "Tell The Monkey to get off his monkey butt and do something.",
         details: "",
+        due: moment()
       },
     ],
   };
 
-  addTask = (title, details) => {
-    let newTask = { title: title, details: details };
+  addTask = (title, details, due) => {
+    let newTask = { title: title, details: details, due: due };
     let tasks = this.state.tasks;
     tasks.push(newTask);
     this.setState({ tasks: tasks });
@@ -34,17 +37,21 @@ class App extends Component {
     localStorage.setItem("tasks", tasks);
   }
 
-  retrieveFromLocalStorage() {
-    let tasks = JSON.parse(localStorage.getItem("tasks"))
+  retrieveFromLocalStorage = () => {
+    let tasks = JSON.parse(localStorage.getItem("tasks"));
     if (tasks) {
-      this.setState({tasks: tasks.tasks})
+      // The following iteration converts a stringified due date to a moment object.
+      tasks.tasks.forEach(task => {
+        if (task.due) task.due = moment(task.due);
+      });
+      this.setState({ tasks: tasks.tasks });
     }
-  }
+  };
   
   componentDidMount() {
     this.retrieveFromLocalStorage()
   }
-  
+
   render() {
     return (
       <div className="App">
